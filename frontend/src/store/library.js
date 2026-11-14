@@ -1,0 +1,4 @@
+import {create} from 'zustand';
+import {persist} from 'zustand/middleware';
+export const useLibrary=create(persist((set)=>({likes:[],playlists:[],toggleLike:id=>set(s=>({likes:s.likes.includes(id)?s.likes.filter(x=>x!==id):[...s.likes,id]})),createPlaylist:name=>{const id=crypto.randomUUID();set(s=>({playlists:[...s.playlists,{id,name,songs:[]}]}));return id;},rename:(id,name)=>set(s=>({playlists:s.playlists.map(p=>p.id===id?{...p,name}:p)})),removePlaylist:id=>set(s=>({playlists:s.playlists.filter(p=>p.id!==id)})),toggleSong:(id,song)=>set(s=>({playlists:s.playlists.map(p=>p.id===id?{...p,songs:p.songs.includes(song)?p.songs.filter(x=>x!==song):[...p.songs,song]}:p)}))}),{name:'tuneflow-library-v1'}));
+export const useSession=create(set=>({user:null,setUser:user=>set({user:user?{id:user._id,username:user.username,email:user.email,role:user.role}:null})}));
