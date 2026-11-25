@@ -1,6 +1,6 @@
 # TuneFlow frontend integration
 
-Backend inspected: all routes, controllers, middleware, models, storage, database startup and package configuration. The original backend is unchanged.
+Backend inspected: all routes, controllers, middleware, models, storage, database startup and package configuration. Backend code and package manifests now live in `backend/`; the frontend remains in `frontend/`. Backend API contracts and business logic are preserved. `backend/server.js` loads `backend/.env` relative to its own location, independently of the working directory.
 
 | Endpoint | Request | Response / access |
 |---|---|---|

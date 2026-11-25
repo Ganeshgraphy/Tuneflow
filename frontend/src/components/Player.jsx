@@ -1,8 +1,244 @@
-import {Play,Pause,SkipBack,SkipForward,Shuffle,Repeat,Volume2,VolumeX,ListMusic,X,Disc3,LoaderCircle} from 'lucide-react';
-import {useState} from 'react';
-import {usePlayer} from '../store/player';
-import {Artwork,Like,formatTime} from './Music';
-export function Controls(){const p=usePlayer();return <div className="controls"><button className={`icon ${p.shuffle?'active':''}`} aria-label="Shuffle" aria-pressed={p.shuffle} onClick={p.toggleShuffle}><Shuffle size={17}/></button><button className="icon" aria-label="Previous track" onClick={()=>p.next(-1)} disabled={!p.song}><SkipBack size={19}/></button><button className="play-button" aria-label={p.playing?'Pause':'Play'} onClick={p.toggle} disabled={!p.song}>{p.loading?<LoaderCircle className="spin" size={21}/>:p.playing?<Pause size={21} fill="currentColor"/>:<Play size={21} fill="currentColor"/>}</button><button className="icon" aria-label="Next track" onClick={()=>p.next()} disabled={!p.song}><SkipForward size={19}/></button><button className={`icon ${p.repeat?'active':''}`} aria-label="Repeat current track" aria-pressed={p.repeat} onClick={p.toggleRepeat}><Repeat size={17}/></button></div>;}
-export function Progress(){const p=usePlayer();return <div className="progress"><span>{formatTime(p.time)}</span><input aria-label="Seek playback" type="range" min="0" max={p.duration||1} step="0.1" value={Math.min(p.time,p.duration||1)} disabled={!p.duration} onChange={e=>p.seek(Number(e.target.value))}/><span>{formatTime(p.duration)}</span></div>;}
-export function NowPlaying(){const p=usePlayer();const [tab,setTab]=useState('playing');return <aside className={`now-panel ${p.panel?'open':''}`}><div className="panel-tabs"><button className={tab==='playing'?'chosen':''} onClick={()=>setTab('playing')}>Now playing</button><button className={tab==='queue'?'chosen':''} onClick={()=>setTab('queue')}>Queue <small>{p.queue.length}</small></button><button className="icon panel-close" aria-label="Close player" onClick={()=>p.setPanel(false)}><X size={18}/></button></div>{tab==='playing'?<><div className="record-stage"><div className={`record ${p.playing?'rotating':''}`}><Artwork seed={p.song?.title||'TuneFlow'}/><i/></div><span className="record-caption">{p.playing?'IN THE FLOW':'FIND YOUR FREQUENCY'}</span></div><div className="now-title"><div><h2>{p.song?.title||'Your next favorite'}</h2><p>{p.song?.artistName||'is waiting to be discovered'}</p></div>{p.song&&<Like id={p.song.id}/>}</div><Progress/><Controls/><div className="lyrics"><span className="eyebrow">THE LISTENING ROOM</span><h3>Let the music speak.</h3><p>Lyrics aren’t available from this music catalog. Settle in and enjoy the sound.</p><div className={`waveform ${p.playing?'moving':''}`}>{Array.from({length:31},(_,i)=><i key={i} style={{height:8+(i*17%39),animationDelay:`${i*.06}s`}}/>)}</div></div></>:<div className="queue"><span className="eyebrow">UP NEXT · {p.queue.length} TRACKS</span>{p.queue.length?p.queue.map((s,i)=><button className={`queue-song ${s.id===p.song?.id?'active':''}`} key={s.id} onClick={()=>p.play(s)}><span>{i+1}</span><Artwork seed={s.title}/><span><b>{s.title}</b><small>{s.artistName}</small></span></button>):<div className="empty"><ListMusic/><p>Play a track to start your queue.</p></div>}</div>}</aside>;}
-export default function Player(){const p=usePlayer();return <footer className="bottom-player"><button className="playing-info" onClick={()=>p.setPanel(true)} aria-label="Open now playing"><Artwork seed={p.song?.title||'TuneFlow'}/><span><b>{p.song?.title||'Ready when you are'}</b><small>{p.song?.artistName||'Choose a track to find your flow'}</small></span></button>{p.song&&<div className="bottom-like"><Like id={p.song.id}/></div>}<div className="bottom-center"><Controls/><Progress/></div><div className="volume-controls"><button className={`icon ${p.panel?'active':''}`} aria-label="Open queue and player" onClick={()=>p.setPanel(!p.panel)}><ListMusic size={20}/></button><button className="icon" aria-label={p.muted?'Unmute':'Mute'} onClick={p.mute}>{p.muted?<VolumeX size={19}/>:<Volume2 size={19}/>}</button><input aria-label="Volume" type="range" min="0" max="1" step="0.01" value={p.muted?0:p.volume} onChange={e=>p.setVolume(Number(e.target.value))}/><Disc3 size={19}/></div>{p.error&&<div className="audio-error" role="alert">{p.error}</div>}</footer>;}
+import {
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  Shuffle,
+  Repeat,
+  Volume2,
+  VolumeX,
+  ListMusic,
+  X,
+  Disc3,
+  LoaderCircle,
+} from "lucide-react";
+import { useState } from "react";
+import { usePlayer } from "../store/player";
+import { Artwork, Like, formatTime } from "./Music";
+export function Controls() {
+  const p = usePlayer();
+  return (
+    <div className="controls">
+      <button
+        className={`icon ${p.shuffle ? "active" : ""}`}
+        aria-label="Shuffle"
+        aria-pressed={p.shuffle}
+        onClick={p.toggleShuffle}
+      >
+        <Shuffle size={17} />
+      </button>
+      <button
+        className="icon"
+        aria-label="Previous track"
+        onClick={() => p.next(-1)}
+        disabled={!p.song}
+      >
+        <SkipBack size={19} />
+      </button>
+      <button
+        className="play-button"
+        aria-label={p.playing ? "Pause" : "Play"}
+        onClick={p.toggle}
+        disabled={!p.song}
+      >
+        {p.loading ? (
+          <LoaderCircle className="spin" size={21} />
+        ) : p.playing ? (
+          <Pause size={21} fill="currentColor" />
+        ) : (
+          <Play size={21} fill="currentColor" />
+        )}
+      </button>
+      <button
+        className="icon"
+        aria-label="Next track"
+        onClick={() => p.next()}
+        disabled={!p.song}
+      >
+        <SkipForward size={19} />
+      </button>
+      <button
+        className={`icon ${p.repeat ? "active" : ""}`}
+        aria-label="Repeat current track"
+        aria-pressed={p.repeat}
+        onClick={p.toggleRepeat}
+      >
+        <Repeat size={17} />
+      </button>
+    </div>
+  );
+}
+export function Progress() {
+  const p = usePlayer();
+  return (
+    <div className="progress">
+      <span>{formatTime(p.time)}</span>
+      <input
+        aria-label="Seek playback"
+        type="range"
+        min="0"
+        max={p.duration || 1}
+        step="0.1"
+        value={Math.min(p.time, p.duration || 1)}
+        disabled={!p.duration}
+        onChange={(e) => p.seek(Number(e.target.value))}
+      />
+      <span>{formatTime(p.duration)}</span>
+    </div>
+  );
+}
+export function NowPlaying() {
+  const p = usePlayer();
+  const [tab, setTab] = useState("playing");
+  return (
+    <aside className={`now-panel ${p.panel ? "open" : ""}`}>
+      <div className="panel-tabs">
+        <button
+          className={tab === "playing" ? "chosen" : ""}
+          onClick={() => setTab("playing")}
+        >
+          Now playing
+        </button>
+        <button
+          className={tab === "queue" ? "chosen" : ""}
+          onClick={() => setTab("queue")}
+        >
+          Queue <small>{p.queue.length}</small>
+        </button>
+        <button
+          className="icon panel-close"
+          aria-label="Close player"
+          onClick={() => p.setPanel(false)}
+        >
+          <X size={18} />
+        </button>
+      </div>
+      {tab === "playing" ? (
+        <>
+          <div className="record-stage">
+            <div className={`record ${p.playing ? "rotating" : ""}`}>
+              <Artwork seed={p.song?.title || "TuneFlow"} />
+              <i />
+            </div>
+            <span className="record-caption">
+              {p.playing ? "IN THE FLOW" : "FIND YOUR FREQUENCY"}
+            </span>
+          </div>
+          <div className="now-title">
+            <div>
+              <h2>{p.song?.title || "Your next favorite"}</h2>
+              <p>{p.song?.artistName || "is waiting to be discovered"}</p>
+            </div>
+            {p.song && <Like id={p.song.id} />}
+          </div>
+          <Progress />
+          <Controls />
+          <div className="lyrics">
+            <span className="eyebrow">THE LISTENING ROOM</span>
+            <h3>Let the music speak.</h3>
+            <p>
+              Lyrics aren’t available from this music catalog. Settle in and
+              enjoy the sound.
+            </p>
+            <div className={`waveform ${p.playing ? "moving" : ""}`}>
+              {Array.from({ length: 31 }, (_, i) => (
+                <i
+                  key={i}
+                  style={{
+                    height: 8 + ((i * 17) % 39),
+                    animationDelay: `${i * 0.06}s`,
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="queue">
+          <span className="eyebrow">UP NEXT · {p.queue.length} TRACKS</span>
+          {p.queue.length ? (
+            p.queue.map((s, i) => (
+              <button
+                className={`queue-song ${s.id === p.song?.id ? "active" : ""}`}
+                key={s.id}
+                onClick={() => p.play(s)}
+              >
+                <span>{i + 1}</span>
+                <Artwork seed={s.title} />
+                <span>
+                  <b>{s.title}</b>
+                  <small>{s.artistName}</small>
+                </span>
+              </button>
+            ))
+          ) : (
+            <div className="empty">
+              <ListMusic />
+              <p>Play a track to start your queue.</p>
+            </div>
+          )}
+        </div>
+      )}
+    </aside>
+  );
+}
+export default function Player() {
+  const p = usePlayer();
+  return (
+    <footer className="bottom-player">
+      <button
+        className="playing-info"
+        onClick={() => p.setPanel(true)}
+        aria-label="Open now playing"
+      >
+        <Artwork seed={p.song?.title || "TuneFlow"} />
+        <span>
+          <b>{p.song?.title || "Ready when you are"}</b>
+          <small>
+            {p.song?.artistName || "Choose a track to find your flow"}
+          </small>
+        </span>
+      </button>
+      {p.song && (
+        <div className="bottom-like">
+          <Like id={p.song.id} />
+        </div>
+      )}
+      <div className="bottom-center">
+        <Controls />
+        <Progress />
+      </div>
+      <div className="volume-controls">
+        <button
+          className={`icon ${p.panel ? "active" : ""}`}
+          aria-label="Open queue and player"
+          onClick={() => p.setPanel(!p.panel)}
+        >
+          <ListMusic size={20} />
+        </button>
+        <button
+          className="icon"
+          aria-label={p.muted ? "Unmute" : "Mute"}
+          onClick={p.mute}
+        >
+          {p.muted ? <VolumeX size={19} /> : <Volume2 size={19} />}
+        </button>
+        <input
+          aria-label="Volume"
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          value={p.muted ? 0 : p.volume}
+          onChange={(e) => p.setVolume(Number(e.target.value))}
+        />
+        <Disc3 size={19} />
+      </div>
+      {p.error && (
+        <div className="audio-error" role="alert">
+          {p.error}
+        </div>
+      )}
+    </footer>
+  );
+}

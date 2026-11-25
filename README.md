@@ -1,39 +1,118 @@
-# TuneFlow
+﻿# TuneFlow
 
-React music frontend in `frontend/`, integrated with the existing Express/MongoDB backend. Backend source is preserved.
+A full-stack music streaming application with a React/Vite frontend and an Express/MongoDB backend. The orange-and-black interface includes discovery, persistent audio playback, artist uploads, authentication, and a browser-local music library.
 
-## Run locally
+## Project structure
 
-1. Install backend dependencies with `npm install` at repository root.
-2. Configure the root `.env` with `MONGO_URI`, `JWT_SECRET`, and `IMAGEKIT_PRIVATE_KEY`. Never copy these into the frontend.
-3. Start the backend with `npm start` (port 3000).
-4. In another terminal, `cd frontend`, run `npm install`, copy `.env.example` to `.env`, then `npm run dev`.
-5. Open the localhost URL printed by Vite (normally http://127.0.0.1:5173).
+```text
+TuneFlow/
+├── frontend/
+│   ├── src/
+│   │   ├── api/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── store/
+│   │   └── styles/
+│   ├── index.html
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── vite.config.js
+│   └── .env.example
+├── backend/
+│   ├── src/
+│   │   ├── controllers/
+│   │   ├── db/
+│   │   ├── middleware/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   ├── services/
+│   │   └── app.js
+│   ├── server.js
+│   ├── package.json
+│   ├── package-lock.json
+│   └── .env.example
+├── .gitignore
+├── FRONTEND_INTEGRATION.md
+└── README.md
+```
+
+Local `.env` files, `node_modules/`, and generated build output are ignored by Git. Each application installs and runs independently; there is no root package or workspace dependency. Backend source and its local `.env` were moved intact into `backend/`. No frontend source or UI changes were required for the reorganization.
+
+## Backend setup
+
+Use Node.js 20.19+ or a newer supported LTS release and npm.
+
+```powershell
+cd backend
+npm install
+# Fresh checkout only; do not overwrite an existing .env:
+Copy-Item .env.example .env
+```
+
+For the existing local checkout, `backend/.env` already contains your preserved settings; skip the copy. Configure these variables for a fresh checkout:
+
+| Variable | Purpose |
+| --- | --- |
+| `MONGO_URI` | MongoDB connection URI with database-user credentials; URL-encode special characters in credentials. |
+| `JWT_SECRET` | Secret used to sign authentication cookies. |
+| `IMAGEKIT_PRIVATE_KEY` | ImageKit server key for audio uploads. |
+| `MONGO_DNS_SERVERS` | Optional comma-separated DNS resolvers for networks that refuse Atlas SRV lookups, such as `1.1.1.1,8.8.8.8`. |
+
+Keep secrets in `backend/.env`, never in frontend variables. Atlas must allow the application's current public IP and the cluster must be running. The optional DNS override only changes Node's DNS resolver; use resolvers allowed by your network.
+
+```powershell
+# From backend/:
+npm run dev
+# Or run without the development watcher:
+npm start
+```
+
+The existing development script uses `npx nodemon server.js`; it may download nodemon on first use. The backend listens on port 3000 after MongoDB connects. `server.js` resolves `.env` relative to itself, so `node backend/server.js` also works from the repository root. All original API routes and responses are preserved.
+
+## Frontend setup
+
+Open a second terminal at the repository root:
+
+```powershell
+cd frontend
+npm install
+# Fresh checkout only; preserve any existing local values:
+Copy-Item .env.example .env
+npm run dev
+```
+
+Open the local URL Vite prints (normally http://127.0.0.1:5173).
+
+| Variable | Default / purpose |
+| --- | --- |
+| `VITE_API_BASE_URL` | `/api`; browser-facing API prefix. Never put secrets in `VITE_` variables. |
+| `API_PROXY_TARGET` | `http://127.0.0.1:3000`; development proxy destination. |
+
+The Vite proxy forwards `/api` requests to Express on port 3000, including authentication cookies. Both applications should run together for API features. No proxy change was needed when moving the backend because the HTTP address is unchanged.
 
 On Windows PowerShell with restricted script execution, use `npm.cmd` instead of `npm`.
 
-## Build
+## Development and verification commands
 
-If startup reports `querySrv ECONNREFUSED`, the backend supports an optional
-`MONGO_DNS_SERVERS=1.1.1.1,8.8.8.8` in the root `.env`. This overrides Node's DNS
-resolver for SRV/TXT lookups without changing Windows network settings. Use only
-resolvers allowed by your network; remove the setting to use system DNS again.
+| Directory | Command | Purpose |
+| --- | --- | --- |
+| `backend/` | `npm install` | Install backend dependencies. |
+| `backend/` | `npm run dev` | Start the backend with nodemon. |
+| `backend/` | `npm start` | Start the backend directly. |
+| `frontend/` | `npm install` | Install frontend dependencies. |
+| `frontend/` | `npm run dev` | Start the frontend with the API proxy. |
+| `frontend/` | `npm run build` | Build to `frontend/dist/`. |
+| `frontend/` | `node --test src/store/player.test.js` | Run the existing player tests. |
+| `frontend/` | `npm run preview` | Preview the static production build. |
 
-Run `npm run build` inside `frontend`. Output is `frontend/dist`. `npm run preview` serves the build for visual checks only; it does not provide the development API proxy.
+The backend's original `npm test` script is a placeholder that exits with an error; no backend test suite currently exists. Static preview does not provide the development API proxy.
 
-For production, serve the static build with SPA fallback to index.html and reverse-proxy `/api` to the Express server on the same origin. The frontend default base URL is `/api`; `API_PROXY_TARGET` only configures development. Cross-origin deployment needs explicit credentialed CORS and appropriate secure cookie settings in the backend. Backend authentication hardening is needed before public exposure; see integration notes. This delivery is local source and has not been publicly deployed.
+For production, serve the frontend build with SPA fallback to `index.html`, and reverse-proxy `/api` to Express on the same origin. An absolute cross-origin API URL requires explicit credentialed CORS and suitable cookie settings in the backend. See the integration notes for existing authentication limitations before public deployment.
 
-## Features
+## Current capabilities and limits
 
-- Responsive orange-and-black discovery shell, responsive navigation, now-playing drawer, record animation and reduced-motion support.
-- Real catalog requests with TanStack Query; catalog search by song/artist; artist views derived from returned tracks.
-- One HTML5 Audio instance for persistent playback, play/pause, queue selection, previous/next, shuffle, repeat-one, seek, volume, mute and media error states.
-- Cookie-based login/register/logout, safe in-memory profile, artist track upload and album creation.
-- Browser-local likes and playlists with create/rename/delete and track membership. These are labeled local and never represented as account-synced.
-- Honest empty and unavailable states for unsupported APIs; abstract fallback artwork, no invented music or lyrics.
+The frontend supports real catalog requests, song/artist filtering, artist views derived from the catalog, cookie-based login/register/logout, artist track uploads and album creation. A single HTML5 Audio instance handles queue selection, seek, pause, shuffle, repeat-one, mute and volume. Successful uploads clear the title/file fields and show a confirmation popup.
 
-The current backend limits catalog responses to 20 songs. It supplies no duration metadata (duration is measured for the current track), artwork, lyrics, album listing, playlist persistence or profile reads/edits. See [FRONTEND_INTEGRATION.md](FRONTEND_INTEGRATION.md) for endpoint contracts and known backend constraints.
+Likes and playlists are browser-local, explicitly labeled, and not account-synced. The current backend returns at most 20 tracks and provides no cover artwork, lyrics, album listing, playlist persistence or profile read/edit endpoint. Track duration is measured during playback. Unsupported features show unavailable states. Full endpoint mappings and known backend constraints are documented in [FRONTEND_INTEGRATION.md](FRONTEND_INTEGRATION.md).
 
-## Manual integration checks
-
-With a working MongoDB/ImageKit configuration: register listener and artist accounts; logout/login; upload an audio file as artist; play its returned URL; seek/pause/switch tracks; check queue and repeat/shuffle; save likes and playlists and reload; filter catalog; create an album from owned songs. Check mobile navigation and player drawer, keyboard controls, reduced-motion preference, server-offline retry and unavailable audio. Register/upload/create-album write real backend records only on explicit submission.
+Reorganization checks use read-only catalog requests and do not create accounts, upload songs, create albums, or modify database records. Browser checks for those write operations can be performed manually when desired.
